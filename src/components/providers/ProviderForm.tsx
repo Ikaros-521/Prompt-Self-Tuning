@@ -19,6 +19,7 @@ import { uid } from "@/lib/utils";
 import { chat, listModels } from "@/lib/llm";
 import { toast } from "@/components/ui/use-toast";
 import type { Provider } from "@/lib/types";
+import { ModelCombobox } from "./ModelCombobox";
 
 interface Props {
   open: boolean;
@@ -39,6 +40,8 @@ export function ProviderForm({ open, onOpenChange, provider }: Props) {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<"ok" | "fail" | null>(null);
   const [testMsg, setTestMsg] = useState("");
+  const [models, setModels] = useState<string[]>([]);
+  const [fetchingModels, setFetchingModels] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -51,6 +54,7 @@ export function ProviderForm({ open, onOpenChange, provider }: Props) {
       setIsDefault(provider?.isDefault ?? (providers?.length ?? 0) === 0);
       setTestResult(null);
       setTestMsg("");
+      setModels([]);
     }
   }, [open, provider, providers?.length]);
 
@@ -96,14 +100,26 @@ export function ProviderForm({ open, onOpenChange, provider }: Props) {
   };
 
   const handleFetchModels = async () => {
-    if (!baseUrl.trim()) return;
-    const models = await listModels(buildProvider());
-    if (models.length > 0) {
-      toast.info(`找到 ${models.length} 个模型`);
-      // 简单：把第一个模型填入便于调试，用户可手动改
-      if (!model && models.length) setModel(models[0]);
-    } else {
-      toast.info("该端点未返回模型列表，请手动填写 model");
+    if (!baseUrl.trim()) {
+      toast.info("请先填写 base_url");
+      return;
+    }
+    setFetchingModels(true);
+    try {
+      const fetched = await listModels(buildProvider());
+      setModels(fetched);
+      if (fetched.length > 0) {
+        toast.info(`找到 ${fetched.length} 个模型`);
+        // 若当前未填或填的不在列表中，提示用户可下拉选择
+        if (!model) setModel(fetched[0]);
+      } else {
+        toast.info("该端点未返回模型列表，请手动填写 model");
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(`获取模型列表失败：${msg}`);
+    } finally {
+      setFetchingModels(false);
     }
   };
 
@@ -150,24 +166,15 @@ export function ProviderForm({ open, onOpenChange, provider }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="p-model">{t("providers.fields.model")}</Label>
-              <div className="flex gap-1.5">
-                <Input
-                  id="p-model"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder={t("providers.fields.modelPlaceholder")}
-                  className="font-mono text-xs"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleFetchModels}
-                  type="button"
-                  title="获取模型列表"
-                >
-                  ↻
-                </Button>
-              </div>
+              <ModelCombobox
+                value={model}
+                onChange={setModel}
+                options={models}
+                placeholder={t("providers.fields.modelPlaceholder")}
+                loading={fetchingModels}
+                onRefresh={handleFetchModels}
+                refreshTitle="获取模型列表"
+              />
             </div>
           </div>
 
