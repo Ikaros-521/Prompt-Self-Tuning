@@ -1,5 +1,7 @@
 # 提示词自优化 · Prompt Self-Tuning
 
+在线体验：[https://ikaros-521.github.io/Prompt-Self-Tuning/](https://ikaros-521.github.io/Prompt-Self-Tuning/)
+
 一个**纯前端**的 LLM 提示词自动优化工具。导入你的训练集（输入 + 期望输出），由一个 AI agent 自动迭代优化 system prompt——逐轮**采样 → 测试 → 评分 → 反思 → 改写 → 验证选优**，直到达到阈值或收敛，并把每个版本存档供后期对比。
 
 界面风格参考 [LLaMA Factory](https://github.com/hiyouga/LlamaFactory) WebUI：紧凑工程表单 + 左日志右曲线双栏 + 折叠面板。
