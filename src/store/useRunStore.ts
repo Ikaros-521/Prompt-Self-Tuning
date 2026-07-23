@@ -297,13 +297,34 @@ export const useRunStore = create<RunStore>((set, get) => {
     ev: Extract<OptimizerEvent, { type: "done" }>,
   ) => {
     try {
+      // 同数据集已有版本：按 content 去重，并记录 content→真实 id。
+      // 场景：基于上一次优化的版本继续优化时，基线 content 与库中已有版本相同，
+      // 去重后基线不入库，但其后继版本的 parentId（以及 run 的 bestVersionId）
+      // 会指向不存在的 id → 版本链断裂。这里统一把这些 id 重定向到库里真实 id。
       const existing = await db.promptVersions
         .where("datasetId")
         .equals(dataset.id)
         .toArray();
-      const existingContents = new Set(existing.map((v) => v.content));
-      const toAdd = ev.versions.filter(
-        (v: PromptVersion) => !existingContents.has(v.content),
+      const contentToDbId = new Map(existing.map((v) => [v.content, v.id]));
+
+      // run 内 id → 库内真实 id 的重定向表：
+      // content 已在库中的版本（典型是被去重的基线），其 id 应替换为库里那条记录的 id
+      const idRemap = new Map<string, string>();
+      for (const v of ev.versions) {
+        const dbId = contentToDbId.get(v.content);
+        if (dbId) idRemap.set(v.id, dbId);
+      }
+      const remapId = (id?: string) => (id ? idRemap.get(id) ?? id : id);
+
+      // 修正 parentId（被去重的基线作父节点时，后继版本改指库里真实 id）
+      const versions = ev.versions.map((v) => ({
+        ...v,
+        parentId: remapId(v.parentId),
+      }));
+
+      // 只入库 content 是新的版本
+      const toAdd = versions.filter(
+        (v: PromptVersion) => !contentToDbId.has(v.content),
       );
       if (toAdd.length) await db.promptVersions.bulkAdd(toAdd);
 
@@ -318,7 +339,8 @@ export const useRunStore = create<RunStore>((set, get) => {
       await db.runs.update(runId, {
         status: statusMap[ev.reason] ?? "done",
         bestScore: ev.bestScore,
-        bestVersionId: ev.bestVersionId,
+        // bestVersionId 指向的版本可能是基线（被去重），重定向到库里真实 id
+        bestVersionId: remapId(ev.bestVersionId),
         currentPrompt: ev.finalPrompt,
         endedAt: Date.now(),
       });

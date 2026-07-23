@@ -41,7 +41,12 @@ export interface OptimizerDeps {
 export interface OptimizerContext {
   rounds: RoundRecord[];
   bestScore: number;
+  /** 当前最优版本 id（基线或本次采纳过的最优） */
+  bestVersionId?: string;
   currentPrompt: string;
+  /** 本次种子/基线版本（用户选定的起点，与成果版本分离：不计入本次成果、不参与防退化计数） */
+  baselineVersion?: PromptVersion;
+  /** 本次新采纳的成果版本（不含基线） */
   adoptedVersions: PromptVersion[];
   totalTokens: number;
 }
@@ -214,7 +219,9 @@ export async function* runOptimization(
   const ctx: OptimizerContext = {
     rounds: [],
     bestScore: 0,
+    bestVersionId: undefined,
     currentPrompt: "",
+    baselineVersion: undefined,
     adoptedVersions: [],
     totalTokens: 0,
   };
@@ -295,8 +302,11 @@ export async function* runOptimization(
       status: "baseline",
       createdAt: Date.now(),
     };
-    ctx.adoptedVersions.push(baselineVersion);
+    // 基线版本作为外部起点记录，不混入本次成果版本（adoptedVersions）：
+    // 它不计入防退化比较，也不影响版本号；新版本的 parentId 指向当前最优（基线或本次成果）。
+    ctx.baselineVersion = baselineVersion;
     ctx.bestScore = baselineScore;
+    ctx.bestVersionId = baselineVersion.id;
 
     yield {
       type: "seed",
@@ -401,21 +411,23 @@ export async function* runOptimization(
       // 2.7 选优（严格大于当前最优才采纳，防退化）
       const adopted = devScore > ctx.bestScore + 0.001;
       if (adopted) {
-        const lastParent = ctx.adoptedVersions[ctx.adoptedVersions.length - 1];
         const newVersion: PromptVersion = {
           id: uid("pv"),
           datasetId: dataset.id,
           content: rewriteRes.newPrompt,
-          version: ctx.adoptedVersions.length,
+          // 成果版本号从 1 开始（基线不计入成果数组）
+          version: ctx.adoptedVersions.length + 1,
           round: roundNum,
           score: devScore,
-          parentId: lastParent?.id,
+          // 父节点指向当前最优：基线或本次上一个采纳的成果
+          parentId: ctx.bestVersionId,
           changes: rewriteRes.changes,
           status: "adopted",
           createdAt: Date.now(),
         };
         ctx.adoptedVersions.push(newVersion);
         ctx.bestScore = devScore;
+        ctx.bestVersionId = newVersion.id;
         ctx.currentPrompt = rewriteRes.newPrompt;
         noImproveCount = 0;
       } else {
@@ -507,9 +519,13 @@ function finish(
   return {
     type: "done",
     bestScore: ctx.bestScore,
-    bestVersionId: ctx.adoptedVersions[ctx.adoptedVersions.length - 1]?.id,
+    bestVersionId: ctx.bestVersionId,
     reason,
-    versions: [...ctx.adoptedVersions],
+    // 基线放最前：它是后续成果版本的 parentId 锚点，必须进库；
+    // 去重（按 content）由调用方 persistResults 处理，重复基线不会污染库。
+    versions: ctx.baselineVersion
+      ? [ctx.baselineVersion, ...ctx.adoptedVersions]
+      : [...ctx.adoptedVersions],
     totalTokens: ctx.totalTokens,
     finalPrompt: ctx.currentPrompt,
   };
