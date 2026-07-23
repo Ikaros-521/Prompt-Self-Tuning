@@ -19,6 +19,7 @@ import {
   type ReflectResult,
 } from "./metaPrompts";
 import { extractJson, sampleN, uid } from "./utils";
+import { clampConcurrency, mapPool, poolWithEvents } from "./concurrency";
 
 /**
  * 优化引擎（GEPA 工程简化版）。
@@ -268,27 +269,32 @@ export async function* runOptimization(
       source: seed.source,
     };
 
-    // 种子基线分
-    const seedResults: CaseResult[] = [];
-    for (let i = 0; i < dev.length; i++) {
-      checkAbort();
-      const res = await runWithPrompt(
-        executor,
-        seed.prompt,
-        dev[i].input,
-        dev[i].context,
-        { temperature: config.executorTemperature, signal },
-      );
-      ctx.totalTokens += res.tokensIn + res.tokensOut;
-      const r = await scoreCase(
-        judge,
-        dev[i],
-        res.content,
-        config.scoreThreshold,
-        signal,
-      );
-      seedResults.push({ ...r, index: i });
-    }
+    // 种子基线分（并发评测）
+    const concurrency = clampConcurrency(config.concurrency);
+    const seedResults = await mapPool(
+      dev,
+      concurrency,
+      async (sample) => {
+        checkAbort();
+        const res = await runWithPrompt(
+          executor,
+          seed.prompt,
+          sample.input,
+          sample.context,
+          { temperature: config.executorTemperature, signal },
+        );
+        ctx.totalTokens += res.tokensIn + res.tokensOut;
+        const r = await scoreCase(
+          judge,
+          sample,
+          res.content,
+          config.scoreThreshold,
+          signal,
+        );
+        return r;
+      },
+      signal,
+    ).then((rs) => rs.map((r, i) => ({ ...r, index: i })));
     const baselineScore = averageScore(seedResults);
 
     const baselineVersion: PromptVersion = {
@@ -328,28 +334,39 @@ export async function* runOptimization(
       const sampledIndices = minibatch.map((s) => train.indexOf(s));
       yield { type: "sampled", indices: sampledIndices };
 
-      // 2.2 + 2.3 逐样本测试+评分（generator 顶层，可实时 yield）
+      // 2.2 + 2.3 逐样本测试+评分（并发，每完成一条实时 yield case_done）
       const results: CaseResult[] = [];
-      for (let i = 0; i < minibatch.length; i++) {
-        checkAbort();
-        yield { type: "testing", index: i + 1, total: minibatch.length };
-        const res = await runWithPrompt(
-          executor,
-          ctx.currentPrompt,
-          minibatch[i].input,
-          minibatch[i].context,
-          { temperature: config.executorTemperature, signal },
-        );
-        ctx.totalTokens += res.tokensIn + res.tokensOut;
-        const r = await scoreCase(
-          judge,
-          minibatch[i],
-          res.content,
-          config.scoreThreshold,
-          signal,
-        );
-        const cr: CaseResult = { ...r, index: sampledIndices[i] };
+      let completed = 0;
+      for await (const ev of poolWithEvents(
+        minibatch,
+        concurrency,
+        async (sample) => {
+          checkAbort();
+          const res = await runWithPrompt(
+            executor,
+            ctx.currentPrompt,
+            sample.input,
+            sample.context,
+            { temperature: config.executorTemperature, signal },
+          );
+          ctx.totalTokens += res.tokensIn + res.tokensOut;
+          const r = await scoreCase(
+            judge,
+            sample,
+            res.content,
+            config.scoreThreshold,
+            signal,
+          );
+          return r;
+        },
+        signal,
+        minibatch.length,
+      )) {
+        completed++;
+        const cr: CaseResult = { ...ev.result, index: sampledIndices[ev.index] };
         results.push(cr);
+        // 进度提示（按完成顺序计 N/M；并发下非严格按下标，仅用于展示）
+        yield { type: "testing", index: completed, total: minibatch.length };
         yield { type: "case_done", result: cr };
       }
       const trainAvg = averageScore(results);
@@ -385,27 +402,31 @@ export async function* runOptimization(
         changes: rewriteRes.changes,
       };
 
-      // 2.6 验证：新 prompt 在 dev 全量跑
-      const devResults: CaseResult[] = [];
-      for (let i = 0; i < dev.length; i++) {
-        checkAbort();
-        const res = await runWithPrompt(
-          executor,
-          rewriteRes.newPrompt,
-          dev[i].input,
-          dev[i].context,
-          { temperature: config.executorTemperature, signal },
-        );
-        ctx.totalTokens += res.tokensIn + res.tokensOut;
-        const r = await scoreCase(
-          judge,
-          dev[i],
-          res.content,
-          config.scoreThreshold,
-          signal,
-        );
-        devResults.push({ ...r, index: i });
-      }
+      // 2.6 验证：新 prompt 在 dev 全量跑（并发）
+      const devResults = await mapPool(
+        dev,
+        concurrency,
+        async (sample) => {
+          checkAbort();
+          const res = await runWithPrompt(
+            executor,
+            rewriteRes.newPrompt,
+            sample.input,
+            sample.context,
+            { temperature: config.executorTemperature, signal },
+          );
+          ctx.totalTokens += res.tokensIn + res.tokensOut;
+          const r = await scoreCase(
+            judge,
+            sample,
+            res.content,
+            config.scoreThreshold,
+            signal,
+          );
+          return r;
+        },
+        signal,
+      ).then((rs) => rs.map((r, i) => ({ ...r, index: i })));
       const devScore = averageScore(devResults);
 
       // 2.7 选优（严格大于当前最优才采纳，防退化）

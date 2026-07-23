@@ -127,6 +127,8 @@
       "convergenceRoundsHint": "连续 N 轮无提升则停止",
       "trainRatio": "训练集占比",
       "agentAutoStop": "允许 agent 自主停止",
+      "concurrency": "样本评测并发度",
+      "concurrencyHint": "每轮样本执行+评分的并发数。1=串行（最稳）；调大可成倍提速，但过高可能触发供应商限流（429）。建议 4-8。",
       "advanced": "高级设置",
       "initialPromptTitle": "初版提示词（可选）",
       "initialPromptHint": "留空 → agent 自动生成；粘贴现成提示词 → 直接用作种子；写需求描述 → 引导 agent 生成",
@@ -211,7 +213,9 @@
       "changes": "主要改动"
     },
     "viewCase": "查看案例",
-    "empty": "选择版本与数据集后开始评估"
+    "empty": "选择版本与数据集后开始评估",
+    "concurrency": "评测并发度",
+    "concurrencyHint": "同时评测的样本数。调大可提速，但过高可能触发供应商限流。建议 4-8。"
   },
   "prompts": {
     "title": "提示词库",

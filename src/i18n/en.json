@@ -127,6 +127,8 @@
       "convergenceRoundsHint": "Stop after N consecutive rounds without improvement",
       "trainRatio": "Train ratio",
       "agentAutoStop": "Allow agent to stop on its own",
+      "concurrency": "Sample eval concurrency",
+      "concurrencyHint": "Number of samples executed+scored in parallel per round. 1=serial (safest). Higher speeds things up but may hit provider rate limits (429). Recommended 4-8.",
       "advanced": "Advanced settings",
       "initialPromptTitle": "Initial prompt (optional)",
       "initialPromptHint": "Leave empty → agent auto-generates; paste a prompt → use as seed directly; write requirements → guide the agent to generate",
@@ -211,7 +213,9 @@
       "changes": "Key changes"
     },
     "viewCase": "View cases",
-    "empty": "Select versions and a dataset to start evaluation"
+    "empty": "Select versions and a dataset to start evaluation",
+    "concurrency": "Eval concurrency",
+    "concurrencyHint": "Number of samples evaluated in parallel. Higher speeds things up but may hit provider rate limits. Recommended 4-8."
   },
   "prompts": {
     "title": "Prompt Library",

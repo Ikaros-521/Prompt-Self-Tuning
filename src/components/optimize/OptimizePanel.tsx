@@ -36,6 +36,7 @@ const DEFAULT_CONFIG: OptimizeConfig = {
   convergenceRounds: 3,
   trainRatio: 0.8,
   agentAutoStop: true,
+  concurrency: 4,
 };
 
 export function OptimizePanel() {

@@ -7,6 +7,13 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Card,
   CardContent,
@@ -44,6 +51,7 @@ export function EvaluatePanel() {
 
   const [datasetId, setDatasetId] = useState<string>("");
   const [selectedVersionIds, setSelectedVersionIds] = useState<string[]>([]);
+  const [concurrency, setConcurrency] = useState(4);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState({ cur: 0, total: 0, label: "" });
   const [summaries, setSummaries] = useState<EvalSummary[]>([]);
@@ -91,9 +99,21 @@ export function EvaluatePanel() {
     try {
       const results: EvalSummary[] = [];
       const threshold = 0.7;
+      const grandTotal = dataset.samples.length * selected.length;
+      let doneCount = 0;
       for (let vi = 0; vi < selected.length; vi++) {
         const v = selected[vi];
         const caseResults: CaseResult[] = [];
+        // 占位条目：让用户立刻看到该版本行（分数随样本完成实时更新）
+        const placeholder: EvalSummary = {
+          promptId: v.id,
+          avgScore: 0,
+          passRate: 0,
+          results: [],
+        };
+        results.push(placeholder);
+        setSummaries([...results]);
+
         for await (const ev of evaluatePrompt(
           executor,
           judge,
@@ -101,16 +121,21 @@ export function EvaluatePanel() {
           dataset,
           threshold,
           controller.signal,
+          concurrency,
         )) {
-          if (ev.result) caseResults.push(ev.result);
+          if (ev.result) {
+            caseResults.push(ev.result);
+            // 每条结果到达即增量更新该版本的分数（实时反馈）
+            results[vi] = summarizeEval(v.id, caseResults, threshold);
+            setSummaries([...results]);
+          }
+          doneCount++;
           setProgress({
-            cur: ev.index + 1 + vi * dataset.samples.length,
-            total: dataset.samples.length * selected.length,
+            cur: doneCount,
+            total: grandTotal,
             label: `v${v.version} (${vi + 1}/${selected.length})`,
           });
         }
-        results.push(summarizeEval(v.id, caseResults, threshold));
-        setSummaries([...results]);
       }
       toast.success(t("evaluate.title"));
     } catch (e) {
@@ -197,6 +222,31 @@ export function EvaluatePanel() {
               <Progress value={(progress.cur / progress.total) * 100} />
             </div>
           )}
+
+          {/* 并发度 */}
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1 text-xs">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help border-b border-dotted border-muted-foreground">
+                    {t("evaluate.concurrency")}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{t("evaluate.concurrencyHint")}</TooltipContent>
+              </Tooltip>
+              <span className="ml-auto font-mono tabular-nums text-foreground">
+                {concurrency}
+              </span>
+            </Label>
+            <Slider
+              value={[concurrency]}
+              min={1}
+              max={16}
+              step={1}
+              disabled={running}
+              onValueChange={(arr) => setConcurrency(arr[0])}
+            />
+          </div>
 
           {/* 版本多选 */}
           {datasetId && (

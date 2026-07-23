@@ -325,6 +325,18 @@ export function ConfigForm({ config, onChange, disabled, onSeedChat }: Props) {
                 tooltip={t("optimize.config.convergenceRoundsHint")}
               />
 
+              <SliderField
+                label={t("optimize.config.concurrency")}
+                value={config.concurrency ?? 4}
+                min={1}
+                max={16}
+                step={1}
+                disabled={disabled}
+                onChange={(v) => set("concurrency", v)}
+                suffix={String(config.concurrency ?? 4)}
+                tooltip={t("optimize.config.concurrencyHint")}
+              />
+
               <div className="flex items-center justify-between rounded-md border p-2.5">
                 <Label htmlFor="auto-stop" className="text-xs">
                   {t("optimize.config.agentAutoStop")}

@@ -128,6 +128,8 @@ export interface OptimizeConfig {
   trainRatio: number;
   /** 是否允许 agent 自主判断停止 */
   agentAutoStop: boolean;
+  /** 样本执行/评测的并发度（1=串行，建议 4-8，过高可能触发供应商限流） */
+  concurrency?: number;
   /** 用户直接提供的初版提示词（非空则跳过自动生成，直接用作种子） */
   initialPrompt?: string;
   /** 用户的需求描述/写作意图（作为背景引导 seed agent 生成） */
