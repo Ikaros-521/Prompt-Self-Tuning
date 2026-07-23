@@ -5,7 +5,8 @@ export type TabKey =
   | "providers"
   | "optimize"
   | "evaluate"
-  | "prompts";
+  | "prompts"
+  | "test";
 
 export type ThemeMode = "light" | "dark";
 

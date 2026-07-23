@@ -12,6 +12,7 @@ import { ProvidersPanel } from "@/components/providers/ProvidersPanel";
 import { OptimizePanel } from "@/components/optimize/OptimizePanel";
 import { EvaluatePanel } from "@/components/evaluate/EvaluatePanel";
 import { PromptLibraryPanel } from "@/components/prompts/PromptLibraryPanel";
+import { TestPanel } from "@/components/test/TestPanel";
 
 export default function App() {
   const { activeTab } = useAppStore();
@@ -43,6 +44,7 @@ export default function App() {
         {activeTab === "optimize" && <OptimizePanel />}
         {activeTab === "evaluate" && <EvaluatePanel />}
         {activeTab === "prompts" && <PromptLibraryPanel />}
+        {activeTab === "test" && <TestPanel />}
       </main>
       <Toaster />
     </div>

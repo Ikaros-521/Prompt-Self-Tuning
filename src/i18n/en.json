@@ -44,7 +44,8 @@
     "providers": "Providers",
     "optimize": "Optimize",
     "evaluate": "Evaluate",
-    "prompts": "Prompt Library"
+    "prompts": "Prompt Library",
+    "test": "Test"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -216,6 +217,38 @@
     "empty": "Select versions and a dataset to start evaluation",
     "concurrency": "Eval concurrency",
     "concurrencyHint": "Number of samples evaluated in parallel. Higher speeds things up but may hit provider rate limits. Recommended 4-8."
+  },
+  "test": {
+    "title": "Prompt Test",
+    "desc": "Load prompt versions and chat to test them, with context turns, temperature and more",
+    "newSession": "New session",
+    "empty": "No sessions yet",
+    "emptyHint": "Select a session, or create a new one to start testing",
+    "chatEmpty": "Type a message below to start chatting",
+    "untitled": "Untitled session",
+    "noProvider": "Please configure an LLM provider in the Providers tab first",
+    "noPrompt": "Please select or write a system prompt in the settings panel first",
+    "noVersions": "No prompt versions for this dataset yet",
+    "placeholder": "Type a message, Enter to send, Shift+Enter for newline…",
+    "thinking": "Thinking…",
+    "confirmDelete": "Delete this session? This cannot be undone.",
+    "confirmClear": "Clear all messages in this session?",
+    "clearMessages": "Clear messages",
+    "deleteSession": "Delete session",
+    "export": "Export chat",
+    "settings": "Settings",
+    "dataset": "Dataset",
+    "provider": "Provider",
+    "promptSource": "Prompt source",
+    "promptSourceLibrary": "From library",
+    "promptSourceCustom": "Custom",
+    "selectPrompt": "Select a prompt",
+    "customPromptPlaceholder": "Write a system prompt (used as the conversation's system setup)…",
+    "contextTurns": "Context turns",
+    "contextTurnsHint": "How many recent turns of history to include per send. 0 = each turn is independent (good for per-case testing); N > 0 = carry the last N turns (multi-turn memory).",
+    "temperature": "Temperature",
+    "maxTokens": "Max output tokens",
+    "maxTokensPlaceholder": "Unlimited"
   },
   "prompts": {
     "title": "Prompt Library",

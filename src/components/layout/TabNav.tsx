@@ -5,6 +5,7 @@ import {
   Sparkles,
   BarChart3,
   Library,
+  MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 import { useAppStore, type TabKey } from "@/store/useAppStore";
@@ -17,6 +18,7 @@ const TABS: { key: TabKey; icon: LucideIcon }[] = [
   { key: "optimize", icon: Sparkles },
   { key: "evaluate", icon: BarChart3 },
   { key: "prompts", icon: Library },
+  { key: "test", icon: MessageSquare },
 ];
 
 export function TabNav() {

@@ -172,6 +172,34 @@ export interface ChatParams {
   signal?: AbortSignal;
 }
 
+/** 测试页：单条对话消息（含 id/ts，便于复制/编辑/删除） */
+export interface TestMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  ts: number;
+}
+
+/** 测试页：一个对话会话，绑定单个 system prompt */
+export interface ChatSession {
+  id: string;
+  title: string;
+  /** 绑定的提示词版本 id（可空，表示手写 system） */
+  promptId?: string;
+  /** 绑定的数据集 id（用于在库内筛选可选版本） */
+  datasetId?: string;
+  /** 实际生效的 system 文本（冗余存：版本被删后会话仍可用） */
+  promptContent: string;
+  messages: TestMessage[];
+  providerId: string;
+  temperature?: number;
+  maxTokens?: number;
+  /** 上下文携带轮数：0=每轮独立无记忆，N=带最近 N 轮历史 */
+  contextTurns?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
 /** 优化引擎对外抛出的进度事件（异步 generator yield） */
 export type OptimizerEvent =
   | { type: "init"; message: string }

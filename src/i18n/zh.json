@@ -44,7 +44,8 @@
     "providers": "供应商",
     "optimize": "优化",
     "evaluate": "评估",
-    "prompts": "提示词库"
+    "prompts": "提示词库",
+    "test": "测试"
   },
   "theme": {
     "toggle": "切换主题",
@@ -216,6 +217,38 @@
     "empty": "选择版本与数据集后开始评估",
     "concurrency": "评测并发度",
     "concurrencyHint": "同时评测的样本数。调大可提速，但过高可能触发供应商限流。建议 4-8。"
+  },
+  "test": {
+    "title": "提示词测试",
+    "desc": "加载提示词版本，进行多轮对话测试，支持上下文轮数、温度等设置",
+    "newSession": "新建会话",
+    "empty": "暂无会话",
+    "emptyHint": "选择一个会话，或新建一个开始测试",
+    "chatEmpty": "在下方输入消息开始对话",
+    "untitled": "未命名会话",
+    "noProvider": "请先在「供应商」页配置一个 LLM 供应商",
+    "noPrompt": "请先在右侧设置中选择或编写 system 提示词",
+    "noVersions": "该数据集暂无提示词版本",
+    "placeholder": "输入消息，Enter 发送，Shift+Enter 换行…",
+    "thinking": "思考中…",
+    "confirmDelete": "确定删除该会话？此操作不可撤销。",
+    "confirmClear": "确定清空该会话的所有消息？",
+    "clearMessages": "清空对话",
+    "deleteSession": "删除会话",
+    "export": "导出对话",
+    "settings": "设置",
+    "dataset": "数据集",
+    "provider": "供应商",
+    "promptSource": "提示词来源",
+    "promptSourceLibrary": "从库中选择",
+    "promptSourceCustom": "手写",
+    "selectPrompt": "选择提示词",
+    "customPromptPlaceholder": "手写 system 提示词（作为对话的系统设定）…",
+    "contextTurns": "上下文轮数",
+    "contextTurnsHint": "每次发送携带最近 N 轮历史。0 = 每轮独立无记忆（适合逐条评测）；N > 0 = 带最近 N 轮上下文（多轮记忆）。",
+    "temperature": "温度",
+    "maxTokens": "最大输出 Token",
+    "maxTokensPlaceholder": "不限"
   },
   "prompts": {
     "title": "提示词库",
