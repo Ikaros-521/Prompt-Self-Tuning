@@ -250,6 +250,21 @@
     "agentDecision": "agent 判断：{{decision}}（{{reason}}）",
     "info": "{{message}}",
     "warn": "⚠ {{message}}",
-    "error": "✗ {{message}}"
+    "error": "✗ {{message}}",
+    "expandAll": "全部展开",
+    "collapseAll": "全部折叠",
+    "expandHint": "点击查看该样本的实测输入 / 期望 / 实际输出 / 评分依据",
+    "detail": {
+      "input": "输入",
+      "context": "上下文",
+      "expected": "期望输出",
+      "actual": "实际输出",
+      "reason": "评分依据",
+      "failedDims": "失败维度",
+      "expand": "展开",
+      "collapse": "收起",
+      "copy": "复制",
+      "copied": "已复制"
+    }
   }
 }

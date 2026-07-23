@@ -15,11 +15,37 @@ import type {
   RoundRecord,
 } from "@/lib/types";
 
+/**
+ * 日志行可选的结构化详情。
+ *
+ * 普通日志只是纯文本；但样本评估这类行需要带上「实测」原文
+ * （输入 / 期望输出 / 实际输出 / 评分依据 / 失败维度），
+ * 否则用户只看得到一个分数，无法自行判断 LLM 评分是否靠谱。
+ */
+export interface LogDetail {
+  /** 得分 0-1 */
+  score?: number;
+  /** 通过状态：pass / partial（格式过但分不够）/ fail（格式不过） */
+  status?: "pass" | "partial" | "fail";
+  /** 格式硬过滤是否通过 */
+  formatPassed?: boolean;
+  input?: string;
+  context?: string;
+  expected?: string;
+  actual?: string;
+  /** LLM judge 给出的评分依据（reason） */
+  reason?: string;
+  /** 失败维度（correctness/completeness/format/conciseness…） */
+  failedDimensions?: string[];
+}
+
 export interface LogLine {
   id: string;
   text: string;
   level: "info" | "success" | "warn" | "error";
   ts: number;
+  /** 若携带结构化详情，则该行在日志里可展开查看实测内容 */
+  detail?: LogDetail;
 }
 
 export interface ChartPoint {
@@ -94,11 +120,15 @@ function tr(key: string, opts?: Record<string, unknown>): string {
 
 export const useRunStore = create<RunStore>((set, get) => {
   /** 追加一条日志（限 500 条） */
-  const addLog = (text: string, level: LogLine["level"] = "info") => {
+  const addLog = (
+    text: string,
+    level: LogLine["level"] = "info",
+    detail?: LogDetail,
+  ) => {
     set((s) => ({
       logs: [
         ...s.logs,
-        { id: uid("log"), text, level, ts: Date.now() },
+        { id: uid("log"), text, level, ts: Date.now(), detail },
       ].slice(-500),
     }));
   };
@@ -146,20 +176,33 @@ export const useRunStore = create<RunStore>((set, get) => {
         // 高频，不写日志
         break;
       case "case_done": {
-        const flag = ev.result.formatPassed
-          ? ev.result.passed
-            ? "✓"
-            : "·"
-          : "✗";
+        const r = ev.result;
+        const flag = r.formatPassed ? (r.passed ? "✓" : "·") : "✗";
+        const status: NonNullable<LogDetail["status"]> = r.passed
+          ? "pass"
+          : r.formatPassed
+            ? "partial"
+            : "fail";
         addLog(
           tr("log.caseDone", {
-            index: ev.result.index + 1,
-            score: ev.result.score.toFixed(2),
+            index: r.index + 1,
+            score: r.score.toFixed(2),
             flag,
           }),
-          ev.result.passed ? "success" : "warn",
+          r.passed ? "success" : "warn",
+          {
+            score: r.score,
+            status,
+            formatPassed: r.formatPassed,
+            input: r.input,
+            context: r.context,
+            expected: r.expected,
+            actual: r.actual,
+            reason: r.reason,
+            failedDimensions: r.failedDimensions,
+          },
         );
-        set((s) => ({ results: [...s.results, ev.result] }));
+        set((s) => ({ results: [...s.results, r] }));
         break;
       }
       case "round_scored":

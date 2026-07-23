@@ -250,6 +250,21 @@
     "agentDecision": "Agent decision: {{decision}} ({{reason}})",
     "info": "{{message}}",
     "warn": "⚠ {{message}}",
-    "error": "✗ {{message}}"
+    "error": "✗ {{message}}",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
+    "expandHint": "Click to view this case's actual input / expected / output / judge reason",
+    "detail": {
+      "input": "Input",
+      "context": "Context",
+      "expected": "Expected",
+      "actual": "Actual",
+      "reason": "Judge reason",
+      "failedDims": "Failed dims",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "copy": "Copy",
+      "copied": "Copied"
+    }
   }
 }
