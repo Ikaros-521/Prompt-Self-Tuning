@@ -238,6 +238,7 @@
   },
   "log": {
     "init": "Init: {{message}}",
+    "seedReady": "Seed prompt ready{{source}}, evaluating baseline…",
     "seed": "Seed prompt ready, baseline score {{score}} {{source}}",
     "roundStart": "── Round {{round}} / {{total}} ──",
     "sampled": "Sampled {{count}} training examples",

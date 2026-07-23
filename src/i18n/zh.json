@@ -238,6 +238,7 @@
   },
   "log": {
     "init": "初始化：{{message}}",
+    "seedReady": "种子提示词已就绪{{source}}，正在评估基线…",
     "seed": "种子提示词已就绪，基线分 {{score}} {{source}}",
     "roundStart": "── 第 {{round}} / {{total}} 轮 ──",
     "sampled": "采样 {{count}} 条训练样本",

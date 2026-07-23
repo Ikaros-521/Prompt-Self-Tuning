@@ -149,6 +149,15 @@ export const useRunStore = create<RunStore>((set, get) => {
         addLog(ev.message, "error");
         set({ status: "error", errorMessage: ev.message });
         break;
+      case "seed_ready":
+        // 种子一就绪就立即显示到「当前提示词」，不必等基线评分
+        addLog(
+          tr("log.seedReady", {
+            source: tr(`optimize.seedSource.${ev.source}`),
+          }),
+        );
+        set({ currentPrompt: ev.prompt });
+        break;
       case "seed":
         addLog(
           tr("log.seed", {

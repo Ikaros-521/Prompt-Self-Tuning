@@ -254,6 +254,13 @@ export async function* runOptimization(
     ctx.currentPrompt = seed.prompt;
     ctx.totalTokens += seed.tokens;
 
+    // 一拿到种子就立即暴露，让「当前提示词」在基线评估/第一轮开始前就显示
+    yield {
+      type: "seed_ready",
+      prompt: seed.prompt,
+      source: seed.source,
+    };
+
     // 种子基线分
     const seedResults: CaseResult[] = [];
     for (let i = 0; i < dev.length; i++) {

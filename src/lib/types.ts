@@ -174,6 +174,14 @@ export interface ChatParams {
 export type OptimizerEvent =
   | { type: "init"; message: string }
   | {
+      /** 种子提示词已就绪：一拿到种子（生成/接收）就立即抛出，
+       *  让「当前提示词」在基线评估和第一轮开始之前就显示出来。
+       *  baseline 分数在 seed 事件里另行报告。 */
+      type: "seed_ready";
+      prompt: string;
+      source: "user" | "guided" | "auto";
+    }
+  | {
       type: "seed";
       prompt: string;
       baselineScore: number;
