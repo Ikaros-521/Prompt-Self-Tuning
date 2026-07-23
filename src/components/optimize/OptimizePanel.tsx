@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useShallow } from "zustand/react/shallow";
 import { Play, Square, RotateCcw, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { db, getDefaultProvider } from "@/lib/db";
-import { useOptimizer } from "@/hooks/useOptimizer";
+import { useRunStore } from "@/store/useRunStore";
 import { useAppStore } from "@/store/useAppStore";
 import type { Dataset, OptimizeConfig, Provider } from "@/lib/types";
 import { ConfigForm } from "./ConfigForm";
@@ -45,7 +46,28 @@ export function OptimizePanel() {
   );
   const providers = useLiveQuery(() => db.providers.toArray(), []);
   const { selectedDatasetId, setSelectedDataset } = useAppStore();
-  const { state, start, stop, reset } = useOptimizer();
+  // 运行状态来自全局 store：切页卸载本组件时后台循环继续，切回从 store 恢复
+  // useShallow：多字段 selector 必须用浅比较，否则每次返回新对象导致无限渲染
+  const state = useRunStore(
+    useShallow((s) => ({
+      status: s.status,
+      logs: s.logs,
+      chart: s.chart,
+      currentRound: s.currentRound,
+      totalRounds: s.totalRounds,
+      currentPrompt: s.currentPrompt,
+      bestScore: s.bestScore,
+      currentScore: s.currentScore,
+      tokens: s.tokens,
+      results: s.results,
+      lastRound: s.lastRound,
+      runId: s.runId,
+      errorMessage: s.errorMessage,
+    })),
+  );
+  const start = useRunStore((s) => s.start);
+  const stop = useRunStore((s) => s.stop);
+  const reset = useRunStore((s) => s.reset);
 
   const [config, setConfig] = useState<OptimizeConfig>(DEFAULT_CONFIG);
   const [seedChatOpen, setSeedChatOpen] = useState(false);

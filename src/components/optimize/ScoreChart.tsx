@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { ChartPoint } from "@/hooks/useOptimizer";
+import type { ChartPoint } from "@/store/useRunStore";
 
 interface Props {
   data: ChartPoint[];

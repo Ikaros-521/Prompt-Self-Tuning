@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import type { LogLine } from "@/hooks/useOptimizer";
+import type { LogLine } from "@/store/useRunStore";
 import { useTranslation } from "react-i18next";
 
 interface Props {
