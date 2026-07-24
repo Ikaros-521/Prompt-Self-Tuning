@@ -1,0 +1,68 @@
+# electron-builder 配置（独立文件，避免 package.json 的 ESM 解析问题）
+# 文档：https://www.electron.build/configuration/configuration
+
+appId: com.ikaros-521.prompt-self-tuning
+productName: Prompt Self-Tuning
+copyright: Copyright © ${author}
+
+# 主进程入口（package.json 的 main 也指向此处）
+directories:
+  output: out
+  buildResources: build
+
+# 打包进安装包的文件。项目无运行时 npm 依赖（全打包进 dist），所以体积很小。
+# node_modules 不会被包含（运行时不需要）。
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+  - "!**/node_modules/**/*"
+
+# 应用图标：提交单一 1024×1024 的 build/icon.png
+# electron-builder 在各平台自动生成所需的 .ico / .icns
+win:
+  icon: build/icon.png
+  target:
+    - target: nsis # NSIS 安装器（可选安装路径）
+      arch: [x64]
+    - target: zip # 绿色免安装版
+      arch: [x64]
+
+nsis:
+  oneClick: false # 非一键安装，允许用户选择安装路径
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Prompt Self-Tuning
+
+mac:
+  icon: build/icon.png
+  category: public.app-category.developer-tools
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+  # 默认不签名。如需签名，在 CI 配置 CSC_LINK / CSC_KEY_PASSWORD 密钥。
+  # hardenedRuntime / notarize 需签名后才能生效，此处保持 false。
+  hardenedRuntime: false
+
+dmg:
+  title: ${productName}-${version}
+
+linux:
+  icon: build/icon.png
+  category: Development
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+  maintainer: Ikaros-521
+
+# 发布到 GitHub Release（CI 中通过 GH_TOKEN 触发，本地构建时忽略）
+publish:
+  provider: github
+  owner: Ikaros-521
+  repo: Prompt-Self-Tuning

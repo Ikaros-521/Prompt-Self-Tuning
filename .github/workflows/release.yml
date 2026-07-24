@@ -1,0 +1,91 @@
+# 桌面应用发布：在 Windows / macOS / Linux 上分别构建 Electron 安装包
+#
+# 触发方式：
+#   1. 推送 tag 形如 v*（如 v0.1.0）→ 自动构建并发布到 GitHub Release
+#   2. Actions 页面手动触发（workflow_dispatch）→ 仅构建并上传 artifact，不发布
+#
+# 跨平台二进制必须在对应 OS 上构建：Windows 出 exe、macOS 出 dmg、Linux 出 AppImage/deb。
+# 默认不签名（macOS 会有 Gatekeeper 提示；如需签名见下方注释）。
+
+name: Release Desktop App
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write # 发布 Release 需要写权限
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false # 单个平台失败不影响其他平台
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+          - os: macos-latest
+            platform: mac
+          - os: ubuntu-latest
+            platform: linux
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # 图标 build/icon.png 已提交进仓库，无需 CI 再生成
+      # BASE_PATH=./ 让 Vite 产出相对路径资源，供 Electron file:// 加载
+      - name: Build & Package
+        run: npm run electron:build
+        env:
+          BASE_PATH: ./
+          # GitHub: 发布到 Release 需要	token
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # —— macOS 代码签名（可选）——
+          # 如需签名与公证，在仓库 Secrets 配置：
+          #   CSC_LINK：开发者证书（.p12）的 base64
+          #   CSC_KEY_PASSWORD：证书密码
+          #   APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID：公证所需
+          # 并启用下方环境变量：
+          # CSC_LINK: ${{ secrets.CSC_LINK }}
+          # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      # 上传构建产物（手动触发时也能从 Actions 页下载）
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-self-tuning-${{ matrix.platform }}
+          path: |
+            out/*.exe
+            out/*.zip
+            out/*.dmg
+            out/*.AppImage
+            out/*.deb
+          if-no-files-found: ignore
+
+      # 仅 tag 触发时发布到 GitHub Release
+      # electron-builder 的 publish:github 配置会自动上传对应平台产物
+      - name: Publish to Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

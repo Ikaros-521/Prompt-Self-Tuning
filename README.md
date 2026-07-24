@@ -28,7 +28,7 @@
 
 ```bash
 npm install
-npm run dev      # 启动开发服务器 http://localhost:5173
+npm run dev      # 启动开发服务器 http://localhost:55573
 npm run build    # 生产构建
 npm run preview  # 预览构建产物
 ```
@@ -87,6 +87,65 @@ npm run preview   # 预览带子路径的构建产物
 3. **优化** Tab → 选数据集与供应商 → 调整轮数/阈值 → 「开始优化」
 
 优化完成后，去 **评估** Tab 对比各版本效果，或在 **提示词库** 导出最佳版本。
+
+---
+
+## 🖥️ 桌面应用打包（Electron）
+
+本项目同时提供 **Electron 桌面版**，可打包成 Windows（`.exe`）、macOS（`.dmg`）、Linux（`.AppImage`/`.deb`）原生应用，数据同样存本地（IndexedDB）。
+
+### 本地开发调试
+
+```bash
+npm install
+npm run electron:dev   # 同时起 Vite dev server 和 Electron 窗口，支持热更新
+```
+
+### 本地打包
+
+```bash
+npm run electron:build
+```
+
+产物输出到 `out/` 目录。在 Windows 上会得到：
+- `Prompt-Self-Tuning Setup x.x.x.exe` — NSIS 安装器（可选安装路径、创建快捷方式）
+- `prompt-self-tuning-x.x.x-win.zip` — 绿色免安装版
+
+> ⚠️ **跨平台限制**：Electron 二进制必须在对应操作系统上构建。本地只能在当前平台打包；要产出 macOS / Linux 安装包，请用下方 CI 方案。
+
+### 全平台发布（GitHub Actions）
+
+仓库已内置 `.github/workflows/release.yml`，在 **Windows / macOS / Linux** 三平台并行构建：
+
+- **打 tag 自动发布**：推送形如 `v0.1.0` 的 tag，CI 会自动构建并发布到 GitHub Release。
+- **手动构建**：在仓库 **Actions** 页面手动触发 `Release Desktop App`，产物作为 artifact 上传（不发布 Release）。
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0   # 触发 CI 全平台构建并发布
+```
+
+### 关于 CORS（桌面版 vs 网页版）
+
+- **网页版**：浏览器直连 LLM 端点，端点**必须支持 CORS**（详见下文）。
+- **桌面版**：Electron 渲染层仍走浏览器网络栈，所以同样建议端点支持 CORS；但本地 Ollama（`http://localhost:11434`）等自部署服务在桌面版下调用更顺，CORS 容错更好。
+
+### macOS 签名说明
+
+默认**不签名**。未签名的 `.dmg` 首次打开会被 Gatekeeper 拦截，可右键 →「打开」放行。如需正式签名与公证，在仓库 Secrets 配置证书信息并启用 `release.yml` 中注释掉的环境变量（`CSC_LINK` / `APPLE_ID` 等）。
+
+### 替换应用图标
+
+应用图标由 `build/icon.png`（1024×1024）生成。替换方法：
+
+```bash
+# 用自带的 favicon.svg 重新生成
+npm run icon
+
+# 或直接把自己的 1024×1024 PNG 覆盖 build/icon.png
+```
+
+electron-builder 会在各平台自动从这张 PNG 生成 `.ico`（Windows）/ `.icns`（macOS）。
 
 ---
 

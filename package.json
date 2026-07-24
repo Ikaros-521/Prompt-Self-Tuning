@@ -4,11 +4,15 @@
   "version": "0.1.0",
   "type": "module",
   "description": "LLM 提示词自动优化工具 - 纯前端 React 实现",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "icon": "node scripts/generate-icon.mjs",
+    "electron:dev": "concurrently -k \"vite --open false --port 55573 --strictPort\" \"wait-on tcp:55573 && cross-env ELECTRON_DEV=1 electron .\"",
+    "electron:build": "tsc -b && cross-env BASE_PATH=./ vite build && electron-builder"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.2",
@@ -41,12 +45,20 @@
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^10.0.3",
+    "cross-env": "^10.1.0",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
     "postcss": "^8.4.49",
+    "sharp": "^0.35.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "wait-on": "^9.1.0"
   },
   "allowScripts": {
-    "esbuild@0.25.12": true
+    "esbuild@0.25.12": true,
+    "electron@43.2.0": true,
+    "electron-winstaller@5.4.0": true
   }
 }

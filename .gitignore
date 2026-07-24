@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Electron 打包输出
+/out
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -27,3 +30,4 @@ dist-ssr
 Thumbs.db
 
 .zcode
+release/
