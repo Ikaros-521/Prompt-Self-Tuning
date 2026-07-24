@@ -49,7 +49,8 @@ export const db = new AppDB();
 
 /** 获取默认 provider，若无则取第一个 */
 export async function getDefaultProvider(): Promise<Provider | undefined> {
-  const def = await db.providers.where("isDefault").equals(1 as never).first();
+  // isDefault 以布尔值存储，IndexedDB 区分 true 与 1，必须用 true 查询。
+  const def = await db.providers.where("isDefault").equals(true as never).first();
   if (def) return def;
   return db.providers.orderBy("createdAt").first();
 }
