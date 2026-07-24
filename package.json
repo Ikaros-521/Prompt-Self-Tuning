@@ -57,9 +57,11 @@
     "vite": "^6.0.7",
     "wait-on": "^9.1.0"
   },
-  "allowScripts": {
-    "esbuild@0.25.12": true,
-    "electron@43.2.0": true,
-    "electron-winstaller@5.4.0": true
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "electron",
+      "electron-winstaller"
+    ]
   }
 }

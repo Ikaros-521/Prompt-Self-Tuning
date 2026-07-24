@@ -40,7 +40,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -80,12 +80,21 @@ jobs:
           if-no-files-found: ignore
 
       # 仅 tag 触发时发布到 GitHub Release
-      # electron-builder 的 publish:github 配置会自动上传对应平台产物
+      # 指定 files 让 action-gh-release 把 electron-builder 产物作为 Release 资源上传。
+      # （electron-builder 的 publish:github 只在 --publish always 时才自动上传，
+      #  本构建命令未带该参数，故交由本步骤处理。）
       - name: Publish to Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           fail_on_unmatched_files: false
+          files: |
+            out/*.exe
+            out/*.zip
+            out/*.dmg
+            out/*.AppImage
+            out/*.deb
+            out/latest*.yml
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
