@@ -1,7 +1,7 @@
 {
   "name": "prompt-self-tuning",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.2",
   "type": "module",
   "description": "LLM 提示词自动优化工具 - 纯前端 React 实现",
   "author": "Ikaros-521",
