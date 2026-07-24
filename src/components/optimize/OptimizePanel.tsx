@@ -148,7 +148,7 @@ export function OptimizePanel() {
     <div className="mx-auto max-w-7xl space-y-3">
       <PageHeader title={t("optimize.title")} description={t("optimize.desc")} />
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[360px_1fr]">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[360px_minmax(0,1fr)]">
         {/* 左：配置 */}
         <div className="space-y-3">
           <div className="rounded-lg border bg-card p-3">
@@ -212,10 +212,11 @@ export function OptimizePanel() {
           )}
         </div>
 
-        {/* 右：双栏 日志(3/4) + 图表(1/4) */}
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-[3fr_1fr]">
+        {/* 右：双栏 日志(3/4) + 图表(1/4)
+            minmax(0, Nfr)：允许轨道收缩到内容以下，避免右侧长文本把 3fr 日志列挤窄 */}
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
           {/* 左大：日志 + 当前 prompt（tab 切换） */}
-          <div className="flex h-[640px] flex-col rounded-lg border bg-card">
+          <div className="flex min-w-0 h-[640px] flex-col rounded-lg border bg-card">
             <Tabs defaultValue="log" className="flex h-full flex-col">
               <div className="flex items-center justify-between border-b px-2">
                 <TabsList className="h-9 bg-transparent">
@@ -247,7 +248,7 @@ export function OptimizePanel() {
           </div>
 
           {/* 右小：图表 + 指标 */}
-          <div className="flex flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3">
             <MetricCards
               current={state.currentScore}
               best={state.bestScore}
@@ -268,7 +269,7 @@ export function OptimizePanel() {
                   {state.results.map((r) => (
                     <div
                       key={r.index}
-                      className="flex items-center gap-2 rounded px-1.5 py-1 text-xs"
+                      className="flex items-start gap-2 rounded px-1.5 py-1 text-xs"
                     >
                       <span
                         className={
@@ -281,10 +282,10 @@ export function OptimizePanel() {
                       >
                         {r.passed ? "✓" : r.formatPassed ? "·" : "✗"}
                       </span>
-                      <span className="font-mono tabular-nums">
+                      <span className="shrink-0 font-mono tabular-nums">
                         {r.score.toFixed(2)}
                       </span>
-                      <span className="truncate text-muted-foreground">
+                      <span className="min-w-0 flex-1 break-words text-muted-foreground">
                         {r.reason}
                       </span>
                     </div>
