@@ -33,6 +33,12 @@ const PRESETS = [
     hint: "CORS 可能不稳定",
   },
   {
+    name: "Ollama（本地）",
+    baseUrl: "http://localhost:11434/v1",
+    model: "llama3.1",
+    hint: "本地免 key，需开 CORS",
+  },
+  {
     name: "自定义",
     baseUrl: "",
     model: "",

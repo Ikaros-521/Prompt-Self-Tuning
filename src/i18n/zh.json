@@ -106,7 +106,7 @@
     "testing": "测试中…",
     "testSuccess": "连接成功，模型可用",
     "testFailed": "连接失败：{{error}}",
-    "corsWarning": "注意：浏览器直连要求该端点支持 CORS。推荐 OpenRouter，或自部署 one-api/new-api 并同源反代、LiteLLM 开启 CORS 中间件。",
+    "corsWarning": "注意：浏览器直连要求该端点支持 CORS。推荐 OpenRouter，或自部署 one-api/new-api 并同源反代、LiteLLM 开启 CORS 中间件。Ollama 本地服务需在启动时设置环境变量 OLLAMA_ORIGINS=* （或指定允许的源）以允许浏览器跨域访问。",
     "securityNote": "API Key 仅存储在你本地浏览器（IndexedDB），明文可见。请勿在公共设备上保存。",
     "empty": "还没有供应商，点击「新增供应商」配置一个"
   },

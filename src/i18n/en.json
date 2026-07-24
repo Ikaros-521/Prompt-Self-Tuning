@@ -106,7 +106,7 @@
     "testing": "Testing…",
     "testSuccess": "Connected. Model is available.",
     "testFailed": "Connection failed: {{error}}",
-    "corsWarning": "Note: browser direct calls require the endpoint to support CORS. Recommend OpenRouter, or self-host one-api/new-api behind a same-origin reverse proxy, or LiteLLM with CORS middleware enabled.",
+    "corsWarning": "Note: browser direct calls require the endpoint to support CORS. Recommend OpenRouter, or self-host one-api/new-api behind a same-origin reverse proxy, or LiteLLM with CORS middleware enabled. For local Ollama, set the OLLAMA_ORIGINS=* environment variable (or specify allowed origins) when launching it to permit browser cross-origin access.",
     "securityNote": "The API key is stored only in your local browser (IndexedDB), in plain text. Do not save it on shared devices.",
     "empty": "No providers yet. Click \"Add Provider\" to configure one."
   },

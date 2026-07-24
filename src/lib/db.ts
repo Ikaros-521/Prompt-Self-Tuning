@@ -40,6 +40,18 @@ export class AppDB extends Dexie {
       runs: "id, datasetId, providerId, status, startedAt",
       chatSessions: "id, providerId, createdAt",
     });
+    // v3: 去掉 providers 的 isDefault 索引——布尔值不是合法的 IndexedDB 索引键，
+    // 以 where("isDefault") 查询会在构建 IDBKeyRange 时抛 DataError。
+    // getDefaultProvider 改为内存筛选，provider 数量很小，无性能影响。
+    // 注意：Dexie 升级时只保留本版本声明过的表，未声明的表会被删除！
+    // 因此必须把所有表都重新声明一遍，仅 providers 这一行有改动。
+    this.version(3).stores({
+      datasets: "id, name, createdAt",
+      providers: "id, name, createdAt",
+      promptVersions: "id, datasetId, version, score, status, createdAt",
+      runs: "id, datasetId, providerId, status, startedAt",
+      chatSessions: "id, providerId, createdAt",
+    });
   }
 }
 
@@ -49,10 +61,10 @@ export const db = new AppDB();
 
 /** 获取默认 provider，若无则取第一个 */
 export async function getDefaultProvider(): Promise<Provider | undefined> {
-  // isDefault 以布尔值存储，IndexedDB 区分 true 与 1，必须用 true 查询。
-  const def = await db.providers.where("isDefault").equals(true as never).first();
-  if (def) return def;
-  return db.providers.orderBy("createdAt").first();
+  // isDefault 为布尔值，不能作为 IndexedDB 索引键（参见 schema v3 注释）。
+  // 这里用 createdAt 索引拉取有序列表后内存筛选，provider 数量小，开销可忽略。
+  const list = await db.providers.orderBy("createdAt").toArray();
+  return list.find((p) => p.isDefault) ?? list[0];
 }
 
 /** 设为默认（其余取消） */

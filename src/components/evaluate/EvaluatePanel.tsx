@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useLiveQuery } from "dexie-react-hooks";
 import { BarChart3, Play, Square, Check } from "lucide-react";
@@ -50,6 +50,8 @@ export function EvaluatePanel() {
   const providers = useLiveQuery(() => db.providers.toArray(), []);
 
   const [datasetId, setDatasetId] = useState<string>("");
+  const [providerId, setProviderId] = useState<string>("");
+  const [judgeProviderId, setJudgeProviderId] = useState<string>("");
   const [selectedVersionIds, setSelectedVersionIds] = useState<string[]>([]);
   const [concurrency, setConcurrency] = useState(4);
   const [running, setRunning] = useState(false);
@@ -60,6 +62,15 @@ export function EvaluatePanel() {
     results: CaseResult[];
   } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // 首次加载时默认选中默认供应商（执行 + 评分默认同执行）
+  useEffect(() => {
+    if (providerId || (providers?.length ?? 0) === 0) return;
+    (async () => {
+      const def = await getDefaultProvider();
+      if (def) setProviderId(def.id);
+    })();
+  }, [providers, providerId]);
 
   const versions = useLiveQuery(async () => {
     if (!datasetId) return [];
@@ -77,9 +88,11 @@ export function EvaluatePanel() {
 
   const handleRun = async () => {
     if (!dataset) return;
-    const judge = await getDefaultProvider();
-    const executor = judge;
-    if (!executor) {
+    const executor = providers?.find((p) => p.id === providerId);
+    // 评分模型默认同执行模型
+    const judge =
+      providers?.find((p) => p.id === judgeProviderId) ?? executor;
+    if (!executor || !judge) {
       toast.error(t("optimize.selectProviderFirst"));
       return;
     }
@@ -188,12 +201,58 @@ export function EvaluatePanel() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">
+                {t("optimize.config.provider")}
+              </label>
+              <Select
+                value={providerId}
+                onValueChange={setProviderId}
+                disabled={running}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("common.select")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {providers?.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} · {p.model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">
+                {t("optimize.config.judgeProvider")}
+              </label>
+              <Select
+                value={judgeProviderId || providerId}
+                onValueChange={setJudgeProviderId}
+                disabled={running}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("common.select")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {providers?.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} · {p.model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                {t("optimize.config.judgeProviderHint")}
+              </p>
+            </div>
             <div className="flex items-end">
               {!running ? (
                 <Button
                   onClick={handleRun}
                   disabled={
                     !dataset ||
+                    !providerId ||
                     selectedVersionIds.length === 0 ||
                     (providers?.length ?? 0) === 0
                   }
