@@ -77,6 +77,11 @@ jobs:
             out/*.dmg
             out/*.AppImage
             out/*.deb
+            out/**/*.exe
+            out/**/*.zip
+            out/**/*.dmg
+            out/**/*.AppImage
+            out/**/*.deb
           if-no-files-found: ignore
 
       # 仅 tag 触发时发布到 GitHub Release
@@ -96,5 +101,11 @@ jobs:
             out/*.AppImage
             out/*.deb
             out/latest*.yml
+            out/release/*.exe
+            out/release/*.zip
+            out/release/*.dmg
+            out/release/*.AppImage
+            out/release/*.deb
+            out/release/latest*.yml
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

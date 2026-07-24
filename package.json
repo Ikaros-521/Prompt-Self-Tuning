@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "icon": "node scripts/generate-icon.mjs",
     "electron:dev": "concurrently -k \"vite --open false --port 55573 --strictPort\" \"wait-on tcp:55573 && cross-env ELECTRON_DEV=1 electron .\"",
-    "electron:build": "tsc -b && cross-env BASE_PATH=./ vite build && electron-builder"
+    "electron:build": "tsc -b && cross-env BASE_PATH=./ vite build && electron-builder --publish never"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.2",
