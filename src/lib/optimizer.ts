@@ -148,7 +148,31 @@ async function reflect(
     ],
   });
   const parsed = extractJson<ReflectResult>(res.content) ?? {};
-  return { result: parsed, tokens: res.tokensIn + res.tokensOut };
+  // LLM 常把数组字段返回成标量（如 "root_causes": "..." 而非 [...]），
+  // 直接 .join() 会抛 "join is not a function"。此处统一规整为字符串数组。
+  const result: ReflectResult = {
+    failure_modes: toStringArray(parsed.failure_modes),
+    root_causes: toStringArray(parsed.root_causes),
+    keep: toStringArray(parsed.keep),
+    suggestions: toStringArray(parsed.suggestions),
+  };
+  return { result, tokens: res.tokensIn + res.tokensOut };
+}
+
+/**
+ * 把 LLM 返回的任意值规整为 string[]：
+ * - undefined/null/"" → []
+ * - 数组 → 逐项转字符串、去空
+ * - 标量（字符串/数字等）→ 单元素数组
+ * 防御 model 不按 schema 输出数组的情况。
+ */
+function toStringArray(v: unknown): string[] {
+  if (v == null) return [];
+  if (Array.isArray(v)) {
+    return v.map((x) => (typeof x === "string" ? x : String(x))).filter((x) => x.length > 0);
+  }
+  if (typeof v === "string") return v.trim() ? [v.trim()] : [];
+  return [String(v)];
 }
 
 /** 改写 */
@@ -174,8 +198,10 @@ async function rewrite(
     new_prompt?: string;
     changes?: string[];
   }>(res.content);
-  const newPrompt = parsed?.new_prompt?.trim() || currentPrompt;
-  const changes = Array.isArray(parsed?.changes) ? parsed!.changes : [];
+  const newPrompt =
+    (typeof parsed?.new_prompt === "string" && parsed.new_prompt.trim()) ||
+    currentPrompt;
+  const changes = toStringArray(parsed?.changes);
   return { newPrompt, changes, tokens: res.tokensIn + res.tokensOut };
 }
 
